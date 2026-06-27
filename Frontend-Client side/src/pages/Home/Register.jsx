@@ -1,174 +1,391 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router';
+
+
+// Mocking BD Geocode data structure (Replace with your actual import or fetch)
+const bdGeocode = {
+  districts: [
+    { id: '1', name: 'Dhaka' },
+    { id: '2', name: 'Chattogram' }
+  ],
+  upazilas: [
+    { id: '101', district_id: '1', name: 'Mirpur' },
+    { id: '102', district_id: '1', name: 'Gulshan' },
+    { id: '201', district_id: '2', name: 'Hathazari' },
+    { id: '202', district_id: '2', name: 'Panchlaish' }
+  ]
+};
 
 const Register = () => {
-const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    avatar: "",
-    bloodGroup: "",
-    district: "",
-    upazila: "",
-    password: "",
-    confirmPassword: "",
+  
+  console.log("API KEY =", import.meta.env.VITE_IMGBB_API_KEY);
+
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    blood_group: '',
+    district: '',
+    upazila: '',
+    password: '',
+    confirmPassword: ''
   });
 
-  const [districts, setDistricts] = useState([]);
-  const [allUpazilas, setAllUpazilas] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [filteredUpazilas, setFilteredUpazilas] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
-  // input change handler
+  // Handle District Change to filter Upazilas dynamically
+  useEffect(() => {
+    if (formData.district) {
+      const filtered = bdGeocode.upazilas.filter(u => u.district_id === formData.district);
+      setFilteredUpazilas(filtered);
+    } else {
+      setFilteredUpazilas([]);
+    }
+    setFormData(prev => ({ ...prev, upazila: '' })); // Reset upazila on district change
+  }, [formData.district]);
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // district change → upazila filter
-  const handleDistrictChange = (e) => {
-    const selectedDistrict = e.target.value;
+  // Handle Avatar Upload to ImgBB
+  const handleAvatarChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    setFormData({
-      ...formData,
-      district: selectedDistrict,
-      upazila: "",
-    });
+  setUploading(true);
+  setError("");
 
-    const filtered = allUpazilas.filter(
-      (u) => u.district === selectedDistrict
+  const imageData = new FormData();
+  imageData.append("image", file);
+
+  try {
+    const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+    console.log("API KEY =", apiKey);
+    
+    const response = await fetch(
+      `https://api.imgbb.com/1/upload?key=${apiKey}`,
+      {
+        method: "POST",
+        body: imageData,
+      }
     );
 
-    setUpazilas(filtered);
+    const result = await response.json();
+
+    console.log("ImgBB Response:", result);
+    console.log(JSON.stringify(result, null, 2));
+    if (result.success) {
+      setAvatarUrl(result.data.url);
+    } else {
+      setError("Failed to upload image to ImgBB.");
+    }
+  } catch (err) {
+    console.log(err);
+    setError("Error uploading image.");
+  } finally {
+    setUploading(false);
+  }
+};
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  // Password Match Check
+  if (formData.password !== formData.confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+  if (!avatarUrl) {
+    setError("Please upload avatar first");
+    return;
+  }
+
+  const payload = {
+    name: formData.name,
+    email: formData.email,
+    avatar: avatarUrl,
+    blood_group: formData.blood_group,
+    district: formData.district,
+    upazila: formData.upazila,
+    password: formData.password,
   };
 
-  // submit
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/auth/register",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
+    const data = await response.json();
 
-    console.log("Register Data:", formData);
-    alert("Registration successful!");
+    if (response.ok) {
+      alert("Registration Successful");
+      navigate("/login");
+    } else {
+  setError(data.message || "Registration Failed");
+}
+  } catch (error) {
+    setError("Registration Failed");
+  }
+  
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-3xl font-bold text-center mb-6">
-        Register as Donor
-      </h2>
+  <div className="min-h-screen flex items-center justify-center bg-base-200 px-4 py-8">
+    <div className="card w-full max-w-4xl bg-base-100 shadow-xl">
+      <div className="card-body">
+        <h2 className="text-3xl font-bold text-center mb-4">
+          Register
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="alert alert-error mb-4">
+            <span>{error}</span>
+          </div>
+        )}
 
-        {/* Name */}
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-        />
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        {/* Email */}
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-        />
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Name</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+              />
+            </div>
 
-        {/* Blood Group */}
-        <select
-          name="bloodGroup"
-          value={formData.bloodGroup}
-          onChange={handleChange}
-          className="select select-bordered w-full"
-        >
-          <option value="">Select Blood Group</option>
-          <option>A+</option>
-          <option>A-</option>
-          <option>B+</option>
-          <option>B-</option>
-          <option>AB+</option>
-          <option>AB-</option>
-          <option>O+</option>
-          <option>O-</option>
-        </select>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Email</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+              />
+            </div>
 
-        {/* District */}
-        <select
-          name="district"
-          value={formData.district}
-          onChange={handleDistrictChange}
-          className="select select-bordered w-full"
-        >
-          <option value="">Select District</option>
-          {districts.map((d, i) => (
-            <option key={i} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Avatar</span>
+              </label>
 
-        {/* Upazila */}
-        <select
-          name="upazila"
-          value={formData.upazila}
-          onChange={handleChange}
-          className="select select-bordered w-full"
-        >
-          <option value="">Select Upazila</option>
-          {upazilas.map((u, i) => (
-            <option key={i} value={u.name}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="file-input file-input-bordered w-full"
+              />
 
-        {/* Password */}
-        <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="input input-bordered w-full"
-          />
+              {uploading && (
+                <span className="text-warning mt-1">
+                  Uploading image...
+                </span>
+              )}
+
+              {avatarUrl && (
+              <>
+                <span className="text-success mt-1 block">
+               ✓ Uploaded
+              </span>
+
+              <img
+              src={avatarUrl}
+              alt="Avatar Preview"
+              className="w-24 h-24 rounded-full mt-2 border"
+           />
+         </>
+        )}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">
+                  Blood Group
+                </span>
+              </label>
+
+              <select
+                name="blood_group"
+                required
+                value={formData.blood_group}
+                onChange={handleChange}
+                className="select select-bordered w-full"
+              >
+                <option value="">
+                  Select Blood Group
+                </option>
+
+                {[
+                  "A+",
+                  "A-",
+                  "B+",
+                  "B-",
+                  "AB+",
+                  "AB-",
+                  "O+",
+                  "O-",
+                ].map((bg) => (
+                  <option key={bg} value={bg}>
+                    {bg}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">
+                  District
+                </span>
+              </label>
+
+              <select
+                name="district"
+                required
+                value={formData.district}
+                onChange={handleChange}
+                className="select select-bordered w-full"
+              >
+                <option value="">
+                  Select District
+                </option>
+
+                {bdGeocode.districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">
+                  Upazila
+                </span>
+              </label>
+
+              <select
+                name="upazila"
+                required
+                value={formData.upazila}
+                onChange={handleChange}
+                disabled={!formData.district}
+                className="select select-bordered w-full"
+              >
+                <option value="">
+                  Select Upazila
+                </option>
+
+                {filteredUpazilas.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">
+                  Password
+                </span>
+              </label>
+
+              <div className="join">
+                <input
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input input-bordered join-item w-full"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(
+                      !showPassword
+                    )
+                  }
+                  className="btn join-item"
+                >
+                  {showPassword
+                    ? "Hide"
+                    : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-control md:col-span-2">
+              <label className="label">
+                <span className="label-text">
+                  Confirm Password
+                </span>
+              </label>
+
+              <input
+                type="password"
+                name="confirmPassword"
+                required
+                value={
+                  formData.confirmPassword
+                }
+                onChange={handleChange}
+                className="input input-bordered w-full"
+              />
+            </div>
+          </div>
 
           <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-3 text-sm"
+            type="submit"
+            disabled={uploading}
+            className="btn btn-primary w-full mt-6"
           >
-            {showPassword ? "Hide" : "Show"}
+            Register
           </button>
-        </div>
+        </form>
 
-        {/* Confirm Password */}
-        <input
-          type={showPassword ? "text" : "password"}
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          className="input input-bordered w-full"
-        />
-
-        <button className="btn btn-error w-full">
-          Register
-        </button>
-      </form>
+        <p className="text-center mt-4">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-primary font-semibold"
+          >
+            Login here
+          </Link>
+        </p>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default Register;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import FilterBar from '../../component/donationReq/FilterBar';
 import RequestCard from '../../component/donationReq/RequestCard';
 

@@ -1,10 +1,10 @@
 import { createBrowserRouter } from "react-router";
 import Main from "../Layout/Main";
-import Login from "../Pages/Auth/Login";
-import Register from "../Pages/Auth/Register";
-import Home from "../Pages/Home/Home";
-import DonationReq from "../Pages/PublicPages/DonationReq";
-import Search from "../Pages/PublicPages/Search";
+import Login from "../pages/Home/Login";
+import Register from "../pages/Home/Register";
+import Home from "../pages/Home/Home";
+import DonationReq from "../pages/PublicPages/DonationReq";
+import Search from "../pages/PublicPages/Search";
 import DashboardLayout from "../Layout/DashboardLayout";
 import DashboardHome from "../pages/Dashboard/DashboardHome/DashboardHome";
 import Profile from "../Pages/Dashboard/Profile/Profile";
@@ -15,6 +15,7 @@ import AllUsers from "../Pages/Dashboard/Admin/AllUsers";
 import AdminABDR from "../Pages/Dashboard/AllBloodDonationReq/AdminView/AdminABDR";
 import VolunteerABDR from "../Pages/Dashboard/AllBloodDonationReq/VolunteerView/VolunteerABDR";
 import Payment from "../Pages/PrivatePages/Payment";
+import PrivateRoute from "./PrivateRoute";
 
 
 
@@ -48,13 +49,15 @@ const router = createBrowserRouter([
         Component: Payment,
       }
     ],
-  },
-  {
-    path: "dashboard",
-    Component: 
-        
-            DashboardLayout,
-    children: [
+      },
+      {
+          path: "dashboard",
+          element: (
+            <PrivateRoute>
+              <DashboardLayout />
+            </PrivateRoute>
+        ),
+        children: [
       {
         index: true,
         Component: DashboardHome,

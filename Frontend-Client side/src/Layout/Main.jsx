@@ -4,12 +4,12 @@ import Footer from "../component/Footer";
 import { useState } from "react";
 
 export default function Main() {
-  const[isLoggedIn,setIsLoggedIn]= useState(false);
+  const [isLoggedIn] = useState(false);
   return (
-   <>
-   <Navbar isLoggedIn={isLoggedIn} />
-    <Outlet />
-    <Footer />
-   </>
+    <>
+      <Navbar isLoggedIn={isLoggedIn} />
+      <Outlet />
+      <Footer />
+    </>
   );
 }

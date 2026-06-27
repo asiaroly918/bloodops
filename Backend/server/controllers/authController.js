@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
+// REGISTER
 const registerUser = async (req, res) => {
   try {
     const {
@@ -21,6 +23,9 @@ const registerUser = async (req, res) => {
       });
     }
 
+    // 🔐 HASH PASSWORD
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       name,
       email,
@@ -28,7 +33,7 @@ const registerUser = async (req, res) => {
       blood_group,
       district,
       upazila,
-      password,
+      password: hashedPassword,
       role: "donor",
       status: "active",
     });
@@ -38,6 +43,7 @@ const registerUser = async (req, res) => {
       message: "User Registered Successfully",
       user,
     });
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -45,9 +51,10 @@ const registerUser = async (req, res) => {
   }
 };
 
+// LOGIN
 const loginUser = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
 
     const user = await User.findOne({ email });
 
@@ -57,8 +64,18 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // 🔐 COMPARE PASSWORD
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
     const token = jwt.sign(
       {
+        id: user._id,
         email: user.email,
         role: user.role,
       },
@@ -72,6 +89,7 @@ const loginUser = async (req, res) => {
       token,
       user,
     });
+
   } catch (error) {
     res.status(500).json({
       message: error.message,
