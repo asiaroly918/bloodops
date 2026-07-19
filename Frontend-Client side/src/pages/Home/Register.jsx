@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
 import bdGeocode from "../../data/bdGeocode";
+import axiosSecure from "../../utils/axiosSecure";
 
 const Register = () => {
   console.log("API KEY =", import.meta.env.VITE_IMGBB_API_KEY);
@@ -56,7 +57,6 @@ const Register = () => {
     imageData.append("image", file);
 
     try {
-      // ImgBB অফিশিয়াল আপলোড API-তে রিকোয়েস্ট পাঠানো হচ্ছে
       const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
         method: "POST",
         body: imageData,
@@ -103,29 +103,18 @@ const Register = () => {
     };
 
     try {
-      // এখানে বাড়তি সেমিকোলনটি (;) ফেলে দিয়ে ঠিক করা হয়েছে
-      const response = await fetch(
-        "https://bloodops.vercel.app/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      // Replaced fetch with axiosSecure and shortened the endpoint path
+      const response = await axiosSecure.post("/auth/register", payload);
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         alert("Registration Successful");
         navigate("/login");
       } else {
-        setError(data.message || "Registration Failed");
+        setError(response.data?.message || "Registration Failed");
       }
     } catch (error) {
       console.error(error);
-      setError("Registration Failed");
+      setError(error.response?.data?.message || "Registration Failed");
     }
   };
 

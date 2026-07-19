@@ -172,3 +172,13 @@ Add your frontend GitHub repository link here.
 Server Repository:
 Add your backend GitHub repository link here.
 
+# Funding Route Documentation
+
+This route handles crowdfunding and donation tracking features for the application.
+
+## Integration Setup
+To use these routes in your main entry point file (e.g., `index.js` or `server.js`), register the router middleware:
+
+```javascript
+const fundingRoute = require('./routes/fundingRoute');
+app.use('/api/funding', fundingRoute);

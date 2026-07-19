@@ -1,3 +1,9 @@
+import axios from "axios";
+
 const axiosSecure = axios.create({
-  baseURL: "https://bloodops.vercel.app/api"
+  baseURL: import.meta.env.VITE_API_URL,
 });
+
+console.log("API URL =", import.meta.env.VITE_API_URL);
+
+export default axiosSecure;

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router";
+import axiosSecure from "../../utils/axiosSecure";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,23 +17,15 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://bloodops.vercel.app/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
+      // Swapped fetch for axiosSecure.post and shortened the endpoint URL
+      const res = await axiosSecure.post("/auth/login", {
+        email,
+        password,
+      });
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (res.ok && data.token) {
+      if (data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -42,7 +35,8 @@ const Login = () => {
       }
     } catch (err) {
       console.error(err);
-      setError("Login failed");
+      // Handles custom error messages sent by your backend through axios
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -52,9 +46,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-base-200 px-4">
       <div className="card w-full max-w-md bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-3xl font-bold text-center mb-4">
-            Login
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-4">Login</h2>
 
           {error && (
             <div className="alert alert-error mb-4">
@@ -67,7 +59,6 @@ const Login = () => {
               <label className="label">
                 <span className="label-text">Email Address</span>
               </label>
-
               <input
                 type="email"
                 className="input input-bordered w-full"
@@ -81,7 +72,6 @@ const Login = () => {
               <label className="label">
                 <span className="label-text">Password</span>
               </label>
-
               <input
                 type="password"
                 className="input input-bordered w-full"

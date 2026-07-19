@@ -1,9 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 
 export default function NotFoundPage() {
-  const handleGoHome = () => {
-    window.location.href = '/';
-  };
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans antialiased flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -35,14 +34,14 @@ export default function NotFoundPage() {
         {/* Operational Flow Trigger Buttons */}
         <div className="space-y-3">
           <button
-            onClick={handleGoHome}
+            onClick={() => navigate('/')}
             className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 px-4 rounded-xl shadow-sm transition transform hover:-translate-y-0.5 text-center text-sm"
           >
             Back to Homepage
           </button>
           
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(-1)}
             className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-xl border border-slate-200 transition text-center text-sm"
           >
             Go Back

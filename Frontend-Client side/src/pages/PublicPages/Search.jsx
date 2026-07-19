@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axiosSecure from '../../utils/axiosSecure';
 
 // Embedded BD Geocode Matrix for synchronous cascade selection
 const bdGeocodeData = {
@@ -62,28 +63,25 @@ export default function SearchDonorsPage() {
     }
 
     setError('');
-    setLoading(true);
+    loading || setLoading(true);
     setHasSearched(true);
 
     try {
-      // Build dynamic API string matching your filtering requirements
-      const queryParams = new URLSearchParams({
-        blood_group: searchParams.blood_group,
-        district: searchParams.districtName,
-        upazila: searchParams.upazila
+      // API call matching backend routing using axiosSecure instance
+      const response = await axiosSecure.get('/donors/search', {
+        params: {
+          blood_group: searchParams.blood_group,
+          district: searchParams.districtName,
+          upazila: searchParams.upazila
+        }
       });
-
-      const response = await fetch(`/api/donors/search?${queryParams.toString()}`);
       
-      if (!response.ok) {
-        throw new Error('Could not complete donor evaluation database search.');
+      if (response.data) {
+        setDonors(response.data);
       }
-      
-      const result = await response.json();
-      setDonors(result);
     } catch (err) {
+      console.warn("API not accessible, initializing offline matching dataset.", err);
       // Falling back to functional Mock Data for rapid developer view rendering
-      console.warn("API not accessible, initializing offline matching dataset.");
       const mockMatches = [
         { _id: "u1", name: "Tanvir Rahman", blood_group: searchParams.blood_group, district: searchParams.districtName, upazila: searchParams.upazila, contact: "+880 1711-223344", email: "tanvir@example.com" },
         { _id: "u2", name: "Nabila Yasmin", blood_group: searchParams.blood_group, district: searchParams.districtName, upazila: searchParams.upazila, contact: "+880 1911-556677", email: "nabila@example.com" }
@@ -94,7 +92,7 @@ export default function SearchDonorsPage() {
     }
   };
 
-  // Bonus Option: Client side HTML-to-PDF compiler pipeline execution
+  // Client side HTML-to-PDF compiler pipeline execution
   const handleDownloadPDF = () => {
     const element = document.getElementById('pdf-report-target');
     if (!element) return;
@@ -110,6 +108,7 @@ export default function SearchDonorsPage() {
       };
       html2pdf.default().from(element).set(options).save();
     }).catch(err => {
+      console.error(err);
       alert("Make sure to install html2pdf.js package (npm i html2pdf.js)");
     });
   };
@@ -230,7 +229,7 @@ export default function SearchDonorsPage() {
               </button>
             </div>
 
-            {/* Container mapping matching node matrix (Target Node reference element compiled for PDF conversion generation) */}
+            {/* Container mapping matching node matrix */}
             <div id="pdf-report-target" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
               {donors.map((donor) => (
                 <div key={donor._id} className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">

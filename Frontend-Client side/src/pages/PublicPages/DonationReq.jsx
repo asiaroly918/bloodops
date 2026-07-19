@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axiosSecure from '../../utils/axiosSecure';
 import FilterBar from '../../component/donationReq/FilterBar';
 import RequestCard from '../../component/donationReq/RequestCard';
 
@@ -13,35 +14,32 @@ export default function DonationRequestsPage() {
   const [selectedBloodGroup, setSelectedBloodGroup] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
 
-  // Fetch only 'pending' requests on mount
+  // Fetch only 'pending' requests on mount using axiosSecure
   useEffect(() => {
     const fetchPendingRequests = async () => {
       setLoading(true);
       try {
-        // Mocking backend response where status === 'pending'
-        const mockData = [
-          { _id: "req_001", recipientName: "Rahim Uddin", district: "Dhaka", upazila: "Mirpur", bloodGroup: "A+", donationDate: "2026-07-01", donationTime: "10:30 AM", status: "pending" },
-          { _id: "req_002", recipientName: "Sumaiya Akhter", district: "Chittagong", upazila: "Hathazari", bloodGroup: "O-", donationDate: "2026-06-28", donationTime: "02:15 PM", status: "pending" },
-          { _id: "req_003", recipientName: "Asif Rahman", district: "Sylhet", upazila: "Sreemangal", bloodGroup: "B+", donationDate: "2026-06-30", donationTime: "09:00 AM", status: "pending" },
-          { _id: "req_004", recipientName: "Fatema Tuz Zohra", district: "Dhaka", upazila: "Uttara", bloodGroup: "AB+", donationDate: "2026-07-05", donationTime: "11:00 AM", status: "pending" }
-        ];
-        setRequests(mockData);
+        const response = await axiosSecure.get('/donation-requests?status=pending');
+        // Backend response checking
+        if (response.data) {
+          setRequests(response.data);
+        }
       } catch (error) {
-        console.error("Error loading donation requests", error);
+        console.error("Error loading donation requests:", error);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchPendingRequests();
   }, []);
 
-  // ⭐ Filter computation logic (এখানে শুধু .trim() যোগ করে পলিশ করা হয়েছে)
+  // Filter computation logic
   const filteredRequests = requests.filter(req => {
     const matchesBlood = selectedBloodGroup ? req.bloodGroup === selectedBloodGroup : true;
     
-    // ডিস্ট্রিক্ট ফিল্টারে স্পেস থাকলে তা কেটে ছোট হাতের অক্ষরের সাথে ম্যাচ করবে
     const matchesDistrict = selectedDistrict 
-      ? req.district.toLowerCase().trim().includes(selectedDistrict.toLowerCase().trim()) 
+      ? req.district?.toLowerCase().trim().includes(selectedDistrict.toLowerCase().trim()) 
       : true;
       
     return matchesBlood && matchesDistrict;
@@ -53,7 +51,10 @@ export default function DonationRequestsPage() {
       {/* Dev Switch to test Logged In / Logged Out redirect behavior */}
       <div className="fixed bottom-4 right-4 z-50 bg-white border border-rose-200 p-2 rounded-lg shadow-lg text-xs flex items-center gap-2">
         <span className="font-medium text-rose-600">Simulate Auth:</span>
-        <button onClick={() => setIsLoggedIn(!isLoggedIn)} className="bg-rose-600 text-white px-2 py-1 rounded hover:bg-rose-700 transition">
+        <button 
+          onClick={() => setIsLoggedIn(!isLoggedIn)} 
+          className="bg-rose-600 text-white px-2 py-1 rounded hover:bg-rose-700 transition"
+        >
           {isLoggedIn ? 'Log Out' : 'Log In'}
         </button>
       </div>

@@ -10,7 +10,6 @@ import DonationReq from "../pages/PublicPages/DonationReq";
 import Search from "../pages/PublicPages/Search";
 import Payment from "../pages/PrivatePages/Payment";
 
-
 import DashboardLayout from "../Layout/DashboardLayout";
 
 import DashboardHome from "../pages/Dashboard/DashboardHome/DashboardHome";
@@ -32,132 +31,99 @@ import Funding from "../pages/Funding/funding";
 import AdminRoute from "./AdminRoute";
 import VolunteerRoute from "./VolunteerRoute";
 
-
 const router = createBrowserRouter([
-
   {
     path: "/",
     Component: Main,
-
     children: [
-
       {
-        index:true,
-        Component:Home
+        index: true,
+        Component: Home
       },
-
       {
-        path:"register",
-        Component:Register
+        path: "register",
+        Component: Register
       },
-
       {
-        path:"login",
-        Component:Login
+        path: "login",
+        Component: Login
       },
-
-
       {
-        path:"donation-requests",
-        Component:DonationReq
+        path: "donation-requests",
+        Component: DonationReq
       },
-
-
       {
-        path:"search",
-        Component:Search
+        path: "search",
+        Component: Search
       },
-
-
       {
-        path:"payment",
-        Component:Payment
+        path: "funding",
+        element: (
+          <PrivateRoute>
+            <Funding />
+          </PrivateRoute>
+        )
+      },
+      {
+        path: "payment",
+        element: (
+          <PrivateRoute>
+            <Payment />
+          </PrivateRoute>
+        )
       }
-
     ]
   },
-
   {
-  path:"dashboard",
-
-  element:
-  (
-    <PrivateRoute>
-      <DashboardLayout/>
-    </PrivateRoute>
-  ),
-
-  children:[
-
-    {
-      index:true,
-      Component:DashboardHome
-    },
-
-    {
-      path:"profile",
-      Component:Profile
-    },
-
-    {
-      path:"create-donation-request",
-      Component:CreateDonationRequest
-    },
-
-    {
-      path:"my-donation-requests",
-      Component:MyDonationRequests
-    },
-
-    {
-      path:"donation-requests/:id",
-      Component:DonationRequestDetail
-    },
-
-    {
-      path:"edit-donation-request/:id",
-      Component:EditDonationRequest
-    },
-
-
-    // Admin
-
-    {
-      path:"all-users",
-      element:(
-        <AdminRoute>
-          <AllUsers/>
-        </AdminRoute>
-      )
-    },
-
-
-    // Page 15
-
-    {
-      path:"all-blood-donation-requests",
-      element:(
-        <VolunteerRoute>
-          <AllBloodDonationRequests/>
-        </VolunteerRoute>
-      )
-    }
-
-  ]
-},
-
-
-// Page 16 Funding
-
-{
-  path:"funding",
-  element:(
-    <PrivateRoute>
-      <Funding/>
-    </PrivateRoute>
-  )
-}
-
+    path: "dashboard",
+    element: (
+      <PrivateRoute>
+        <DashboardLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      {
+        index: true,
+        Component: DashboardHome
+      },
+      {
+        path: "profile",
+        Component: Profile
+      },
+      {
+        path: "create-donation-request",
+        Component: CreateDonationRequest
+      },
+      {
+        path: "my-donation-requests",
+        Component: MyDonationRequests
+      },
+      {
+        path: "donation-requests/:id",
+        Component: DonationRequestDetail
+      },
+      {
+        path: "edit-donation-request/:id",
+        Component: EditDonationRequest
+      },
+      {
+        path: "all-users",
+        element: (
+          <AdminRoute>
+            <AllUsers />
+          </AdminRoute>
+        )
+      },
+      {
+        path: "all-blood-donation-requests",
+        element: (
+          <VolunteerRoute>
+            <AllBloodDonationRequests />
+          </VolunteerRoute>
+        )
+      }
+    ]
+  }
 ]);
 
 export default router;

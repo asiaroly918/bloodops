@@ -1,8 +1,8 @@
 import { useState } from 'react';
-
 import HeroSection from '../../component/HeroSection';
 import FeaturedSection from '../../component/FeaturedSection';
 import ContactSection from '../../component/ContactSection';
+import axiosSecure from "../../utils/axiosSecure";
 
 
 // --- MAIN HOME PAGE COMPONENT ---
@@ -23,11 +23,9 @@ export default function HomePage() {
         </button>
       </div>
 
-      
       <HeroSection />
       <FeaturedSection />
-      <ContactSection/>
-     
+      <ContactSection />
     </div>
   );
 }

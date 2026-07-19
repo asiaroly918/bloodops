@@ -1,22 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import bdGeocode from "../../../data/bdGeocode";
+import axiosSecure from "../../../utils/axiosSecure";
 
 export default function CreateDonationRequest() {
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
 
- useEffect(() => {
-  if (user?.status === "blocked") {
-    alert(
-      "Your account is blocked. You cannot create donation requests."
-    );
+  useEffect(() => {
+    if (user?.status === "blocked") {
+      alert("Your account is blocked. You cannot create donation requests.");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, navigate]);
 
-    navigate("/dashboard", {
-      replace: true,
-    });
-  }
-}, [user, navigate]);
   // Filter করার জন্য District ID
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
 
@@ -43,9 +40,7 @@ export default function CreateDonationRequest() {
     const { name, value } = e.target;
 
     if (name === "recipient_district") {
-      const districtId =
-        e.target.options[e.target.selectedIndex].dataset.id;
-
+      const districtId = e.target.options[e.target.selectedIndex].dataset.id;
       setSelectedDistrictId(districtId);
 
       setFormData({
@@ -53,8 +48,7 @@ export default function CreateDonationRequest() {
         recipient_district: value, // Name Save হবে
         recipient_upazila: "",
       });
-
-      return ;
+      return;
     }
 
     setFormData({
@@ -67,26 +61,12 @@ export default function CreateDonationRequest() {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("token");
+      const response = await axiosSecure.post("/donation-requests", {
+        ...formData,
+        status: "pending",
+      });
 
-      const response = await fetch(
-        "http://https://bloodops.vercel.app/api/donation-requests",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            status: "pending",
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         alert("Donation Request Created Successfully!");
 
         setFormData({
@@ -104,53 +84,48 @@ export default function CreateDonationRequest() {
         });
 
         setSelectedDistrictId("");
-
         navigate("/dashboard/my-donation-requests");
-      } else {
-        alert(data.message || "Failed to create request");
       }
     } catch (error) {
       console.log(error);
-      alert("Something went wrong");
+      const errMsg = error.response?.data?.message || "Something went wrong";
+      alert(errMsg);
     }
   };
 
-   if (user?.status === "blocked") {
-  return (
-    <div className="flex justify-center items-center min-h-[60vh]">
-      <div className="bg-white shadow-lg rounded-xl p-8 text-center">
-        <h2 className="text-3xl font-bold text-red-600 mb-4">
-          Account Blocked
-        </h2>
-
-        <p className="text-gray-600">
-          Your account has been blocked by the admin.
-          You cannot create donation requests.
-        </p>
+  if (user?.status === "blocked") {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="bg-white shadow-lg rounded-xl p-8 text-center">
+          <h2 className="text-3xl font-bold text-red-600 mb-4">
+            Account Blocked
+          </h2>
+          <p className="text-gray-600">
+            Your account has been blocked by the admin. You cannot create
+            donation requests.
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
-  
-  return(
-        
-      <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow">
-      <h2 className="text-3xl font-bold mb-8 text-center">
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow text-black">
+      <h2 className="text-3xl font-bold mb-8 text-center text-black">
         Create Donation Request
       </h2>
 
       <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
-
         {/* Requester Name */}
         <input
-          className="input input-bordered w-full"
+          className="input input-bordered w-full bg-gray-100"
           value={formData.requester_name}
           readOnly
         />
 
         {/* Requester Email */}
         <input
-          className="input input-bordered w-full"
+          className="input input-bordered w-full bg-gray-100"
           value={formData.requester_email}
           readOnly
         />
@@ -160,7 +135,7 @@ export default function CreateDonationRequest() {
           type="text"
           name="recipient_name"
           placeholder="Recipient Name"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-black"
           value={formData.recipient_name}
           onChange={handleChange}
           required
@@ -169,13 +144,12 @@ export default function CreateDonationRequest() {
         {/* District */}
         <select
           name="recipient_district"
-          className="select select-bordered w-full"
+          className="select select-bordered w-full text-black"
           value={formData.recipient_district}
           onChange={handleChange}
           required
         >
           <option value="">Select District</option>
-
           {bdGeocode.districts.map((district) => (
             <option
               key={district.id}
@@ -190,18 +164,14 @@ export default function CreateDonationRequest() {
         {/* Upazila */}
         <select
           name="recipient_upazila"
-          className="select select-bordered w-full"
+          className="select select-bordered w-full text-black"
           value={formData.recipient_upazila}
           onChange={handleChange}
           required
         >
           <option value="">Select Upazila</option>
-
           {filteredUpazilas.map((upazila) => (
-            <option
-              key={upazila.id}
-              value={upazila.name}
-            >
+            <option key={upazila.id} value={upazila.name}>
               {upazila.name}
             </option>
           ))}
@@ -212,7 +182,7 @@ export default function CreateDonationRequest() {
           type="text"
           name="hospital_name"
           placeholder="Hospital Name"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-black"
           value={formData.hospital_name}
           onChange={handleChange}
           required
@@ -223,7 +193,7 @@ export default function CreateDonationRequest() {
           type="text"
           name="full_address"
           placeholder="Full Address"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-black"
           value={formData.full_address}
           onChange={handleChange}
           required
@@ -232,7 +202,7 @@ export default function CreateDonationRequest() {
         {/* Blood Group */}
         <select
           name="blood_group"
-          className="select select-bordered w-full"
+          className="select select-bordered w-full text-black"
           value={formData.blood_group}
           onChange={handleChange}
           required
@@ -252,7 +222,7 @@ export default function CreateDonationRequest() {
         <input
           type="date"
           name="donation_date"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-black"
           value={formData.donation_date}
           onChange={handleChange}
           required
@@ -262,7 +232,7 @@ export default function CreateDonationRequest() {
         <input
           type="time"
           name="donation_time"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full text-black"
           value={formData.donation_time}
           onChange={handleChange}
           required
@@ -272,20 +242,16 @@ export default function CreateDonationRequest() {
         <textarea
           name="request_message"
           placeholder="Request Message"
-          className="textarea textarea-bordered md:col-span-2"
+          className="textarea textarea-bordered md:col-span-2 text-black"
           rows={5}
           value={formData.request_message}
           onChange={handleChange}
           required
         />
 
-        <button
-          type="submit"
-          className="btn btn-primary md:col-span-2"
-        >
+        <button type="submit" className="btn btn-primary md:col-span-2">
           Create Donation Request
         </button>
-
       </form>
     </div>
   );

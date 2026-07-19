@@ -3,14 +3,12 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-
-import axios from "axios";
 import { useState } from "react";
+import axiosSecure from "../../utils/axiosSecure";
 
 const CheckoutForm = ({ amount }) => {
   const stripe = useStripe();
   const elements = useElements();
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -23,17 +21,12 @@ const CheckoutForm = ({ amount }) => {
     try {
       setLoading(true);
 
-      // Create Payment Intent
-      const paymentIntentRes = await axios.post(
-        "http://https://bloodops.vercel.app/api/funding/create-payment-intent",
-        {
-          amount: Number(amount),
-        }
-      );
+      // 1. Create Payment Intent
+      const paymentIntentRes = await axiosSecure.post("/funding/create-payment-intent", {
+        amount: Number(amount),
+      });
 
-      const clientSecret =
-        paymentIntentRes.data.clientSecret;
-
+      const clientSecret = paymentIntentRes.data.clientSecret;
       const card = elements.getElement(CardElement);
 
       if (!card) {
@@ -42,50 +35,26 @@ const CheckoutForm = ({ amount }) => {
       }
 
       // Confirm Payment
-      const result =
-        await stripe.confirmCardPayment(
-          clientSecret,
-          {
-            payment_method: {
-              card: card,
-            },
-          }
-        );
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: card,
+        },
+      });
 
       if (result.error) {
         alert(result.error.message);
-      } else if (
-        result.paymentIntent.status ===
-        "succeeded"
-      ) {
-        const user = JSON.parse(
-          localStorage.getItem("user")
-        );
+      } else if (result.paymentIntent.status === "succeeded") {
+        const user = JSON.parse(localStorage.getItem("user"));
 
-        // Save Funding Record
-        await axios.post(
-          "http://https://bloodops.vercel.app/api/funding",
-          {
-            name:
-              user?.name ||
-              user?.displayName ||
-              "Unknown User",
+        // 2. Save Funding Record
+        await axiosSecure.post("/funding", {
+          name: user?.name || user?.displayName || "Unknown User",
+          email: user?.email || "unknown@email.com",
+          amount: Number(amount),
+          paymentIntentId: result.paymentIntent.id,
+        });
 
-            email:
-              user?.email ||
-              "unknown@email.com",
-
-            amount: Number(amount),
-
-            paymentIntentId:
-              result.paymentIntent.id,
-          }
-        );
-
-        alert(
-          "Payment Successful & Funding Saved"
-        );
-
+        alert("Payment Successful & Funding Saved");
         window.location.reload();
       }
     } catch (error) {
@@ -97,10 +66,7 @@ const CheckoutForm = ({ amount }) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full mt-4"
-    >
+    <form onSubmit={handleSubmit} className="w-full mt-4">
       <div className="border p-4 rounded-lg mb-4 bg-white">
         <CardElement
           options={{
@@ -112,15 +78,9 @@ const CheckoutForm = ({ amount }) => {
       <button
         type="submit"
         className="btn btn-primary w-full"
-        disabled={
-          !stripe ||
-          loading ||
-          !amount
-        }
+        disabled={!stripe || loading || !amount}
       >
-        {loading
-          ? "Processing..."
-          : `Pay $${amount}`}
+        {loading ? "Processing..." : `Pay $${amount}`}
       </button>
     </form>
   );

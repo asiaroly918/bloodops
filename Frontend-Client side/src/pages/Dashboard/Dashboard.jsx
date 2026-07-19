@@ -11,22 +11,23 @@ const Dashboard = () => {
       return null;
     }
   });
+  
   const [loading] = useState(false);
 
   if (loading) {
-    return <p className="text-center mt-10">Loading...</p>;
+    return <p className="text-center mt-10 text-black">Loading...</p>;
   }
 
   if (!user) {
     return (
-      <p className="text-center mt-10 text-red-500">
+      <p className="text-center mt-10 text-red-500 font-medium">
         Please login first
       </p>
     );
   }
 
   return (
-    <div>
+    <div className="text-black">
       {user.role === "admin" ? (
         <Admin user={user} />
       ) : (
